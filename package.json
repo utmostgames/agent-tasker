@@ -1,0 +1,9 @@
+{
+  "name": "claude-task-board",
+  "version": "1.0.0",
+  "description": "Lightweight localhost Kanban board for human-Claude task collaboration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

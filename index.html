@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Board</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --border: #30363d;
+  --border-hover: #484f58;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-dim: #6e7681;
+  --p1: #f85149; --p2: #f0883e; --p3: #d4a72c; --p4: #58a6ff; --p5: #8b949e;
+  --type-simple: #8b949e; --type-brainstorm: #bc8cff; --type-feature: #3fb950; --type-maintenance: #d29922;
+  --effort-xs: #4a5568; --effort-s: #4a6fa5; --effort-m: #3b82c4; --effort-l: #2f8ee0; --effort-xl: #58a6ff; --effort-xxl: #79bbff;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Top Bar */
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.topbar h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+.topbar select, .topbar input { background: var(--bg-tertiary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 10px; font-size: 13px; outline: none; }
+.topbar select:focus, .topbar input:focus { border-color: var(--p4); }
+.topbar input[type="search"] { width: 220px; }
+.topbar .spacer { flex: 1; }
+.btn { background: var(--bg-tertiary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--border-hover); background: var(--border); }
+.btn-primary { background: #238636; border-color: #2ea043; }
+.btn-primary:hover { background: #2ea043; }
+.btn-danger { color: #f85149; }
+.btn-danger:hover { background: rgba(248,81,73,0.15); }
+
+/* Filter Bar */
+.filterbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.filter-group { display: flex; align-items: center; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-right: 4px; }
+.chip { font-size: 11px; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; user-select: none; background: transparent; color: var(--text-muted); }
+.chip.active { background: var(--p4); border-color: var(--p4); color: #fff; }
+.chip:hover { border-color: var(--border-hover); }
+
+/* Type filter chips — distinct colors per type */
+.chip[data-filter="type"][data-value="simple"]      { border-color: var(--type-simple); color: var(--type-simple); }
+.chip[data-filter="type"][data-value="brainstorm"]   { border-color: var(--type-brainstorm); color: var(--type-brainstorm); }
+.chip[data-filter="type"][data-value="feature"]      { border-color: var(--type-feature); color: var(--type-feature); }
+.chip[data-filter="type"][data-value="maintenance"]  { border-color: var(--type-maintenance); color: var(--type-maintenance); }
+.chip[data-filter="type"].active[data-value="simple"]      { background: var(--type-simple); border-color: var(--type-simple); color: #fff; }
+.chip[data-filter="type"].active[data-value="brainstorm"]   { background: var(--type-brainstorm); border-color: var(--type-brainstorm); color: #fff; }
+.chip[data-filter="type"].active[data-value="feature"]      { background: var(--type-feature); border-color: var(--type-feature); color: #fff; }
+.chip[data-filter="type"].active[data-value="maintenance"]  { background: var(--type-maintenance); border-color: var(--type-maintenance); color: #fff; }
+
+/* Effort filter chips — blue intensity spectrum */
+.chip[data-filter="effort"][data-value="XS"]  { border-color: var(--effort-xs); color: var(--effort-xs); }
+.chip[data-filter="effort"][data-value="S"]   { border-color: var(--effort-s); color: var(--effort-s); }
+.chip[data-filter="effort"][data-value="M"]   { border-color: var(--effort-m); color: var(--effort-m); }
+.chip[data-filter="effort"][data-value="L"]   { border-color: var(--effort-l); color: var(--effort-l); }
+.chip[data-filter="effort"][data-value="XL"]  { border-color: var(--effort-xl); color: var(--effort-xl); }
+.chip[data-filter="effort"][data-value="XXL"] { border-color: var(--effort-xxl); color: var(--effort-xxl); }
+.chip[data-filter="effort"].active[data-value="XS"]  { background: var(--effort-xs); border-color: var(--effort-xs); color: #fff; }
+.chip[data-filter="effort"].active[data-value="S"]   { background: var(--effort-s); border-color: var(--effort-s); color: #fff; }
+.chip[data-filter="effort"].active[data-value="M"]   { background: var(--effort-m); border-color: var(--effort-m); color: #fff; }
+.chip[data-filter="effort"].active[data-value="L"]   { background: var(--effort-l); border-color: var(--effort-l); color: #fff; }
+.chip[data-filter="effort"].active[data-value="XL"]  { background: var(--effort-xl); border-color: var(--effort-xl); color: #fff; }
+.chip[data-filter="effort"].active[data-value="XXL"] { background: var(--effort-xxl); border-color: var(--effort-xxl); color: #fff; }
+.filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+/* Board */
+.board { display: flex; gap: 8px; padding: 12px 16px; flex: 1; overflow-x: auto; min-height: 0; }
+.column { background: var(--bg-secondary); border-radius: var(--radius); min-width: 260px; max-width: 320px; flex: 1; display: flex; flex-direction: column; border: 1px solid var(--border); }
+.column.drag-over { border-color: var(--p4); background: rgba(88,166,255,0.05); }
+.column-header { padding: 10px 12px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.column-header .count { font-size: 11px; background: var(--bg-tertiary); color: var(--text-muted); padding: 1px 7px; border-radius: 10px; }
+.column-body { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
+.column-body::-webkit-scrollbar { width: 6px; }
+.column-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Cards */
+.card { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 10px 10px 14px; cursor: grab; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
+.card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
+.card.dragging { opacity: 0.4; }
+.card::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; }
+.card[data-priority="1"]::before { background: var(--p1); }
+.card[data-priority="2"]::before { background: var(--p2); }
+.card[data-priority="3"]::before { background: var(--p3); }
+.card[data-priority="4"]::before { background: var(--p4); }
+.card[data-priority="5"]::before { background: var(--p5); }
+.card-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
+.badge-type { color: #fff; }
+.badge-type.simple { background: var(--type-simple); }
+.badge-type.brainstorm { background: var(--type-brainstorm); }
+.badge-type.feature { background: var(--type-feature); }
+.badge-type.maintenance { background: var(--type-maintenance); }
+.badge-effort { border: 1px solid var(--border); color: var(--text-muted); }
+.badge-effort[data-effort="XS"]  { background: var(--effort-xs); border-color: var(--effort-xs); color: #fff; }
+.badge-effort[data-effort="S"]   { background: var(--effort-s); border-color: var(--effort-s); color: #fff; }
+.badge-effort[data-effort="M"]   { background: var(--effort-m); border-color: var(--effort-m); color: #fff; }
+.badge-effort[data-effort="L"]   { background: var(--effort-l); border-color: var(--effort-l); color: #fff; }
+.badge-effort[data-effort="XL"]  { background: var(--effort-xl); border-color: var(--effort-xl); color: #fff; }
+.badge-effort[data-effort="XXL"] { background: var(--effort-xxl); border-color: var(--effort-xxl); color: #fff; }
+.badge-priority { color: #fff; font-size: 9px; font-weight: 700; min-width: 18px; text-align: center; }
+.badge-priority[data-p="1"] { background: var(--p1); }
+.badge-priority[data-p="2"] { background: var(--p2); }
+.badge-priority[data-p="3"] { background: var(--p3); }
+.badge-priority[data-p="4"] { background: var(--p4); }
+.badge-priority[data-p="5"] { background: var(--p5); }
+.card-title { font-size: 13px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.card-desc { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 10px; color: var(--text-dim); }
+.card-assignee { font-size: 10px; color: var(--text-muted); }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 60px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; width: 560px; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.modal-header h2 { font-size: 15px; font-weight: 600; }
+.modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.form-row { display: flex; gap: 10px; }
+.form-group { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea { background: var(--bg-tertiary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; font-size: 13px; outline: none; font-family: inherit; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--p4); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.modal-footer { display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); }
+.modal-footer .right { display: flex; gap: 8px; }
+
+/* Empty state */
+.empty { padding: 20px; text-align: center; color: var(--text-dim); font-size: 12px; }
+
+/* Sort */
+.sort-select { font-size: 11px; padding: 2px 6px; }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <h1>Task Board</h1>
+  <select id="projectSelect"><option value="">All Projects</option></select>
+  <input type="search" id="searchInput" placeholder="Search tasks...">
+  <div class="spacer"></div>
+  <label style="font-size:12px;display:flex;align-items:center;gap:4px;color:var(--text-muted);cursor:pointer">
+    <input type="checkbox" id="showClosed"> Closed
+  </label>
+  <select id="sortSelect" class="sort-select" title="Sort by">
+    <option value="priority">Priority</option>
+    <option value="effort">Effort</option>
+    <option value="date">Newest</option>
+    <option value="alpha">A-Z</option>
+  </select>
+  <button class="btn btn-primary" onclick="openModal()">+ New Task</button>
+</div>
+
+<!-- Filter Bar -->
+<div class="filterbar">
+  <div class="filter-group">
+    <label>Type</label>
+    <span class="chip active" data-filter="type" data-value="simple">Simple</span>
+    <span class="chip active" data-filter="type" data-value="brainstorm">Brainstorm</span>
+    <span class="chip active" data-filter="type" data-value="feature">Feature</span>
+    <span class="chip active" data-filter="type" data-value="maintenance">Maintenance</span>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label>Effort</label>
+    <span class="chip active" data-filter="effort" data-value="XS">XS</span>
+    <span class="chip active" data-filter="effort" data-value="S">S</span>
+    <span class="chip active" data-filter="effort" data-value="M">M</span>
+    <span class="chip active" data-filter="effort" data-value="L">L</span>
+    <span class="chip active" data-filter="effort" data-value="XL">XL</span>
+    <span class="chip active" data-filter="effort" data-value="XXL">XXL</span>
+  </div>
+</div>
+
+<!-- Board -->
+<div class="board" id="board"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">New Task</h2>
+      <button class="btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="fTitle" placeholder="Task title">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="fType">
+            <option value="simple">Simple</option>
+            <option value="brainstorm">Brainstorm</option>
+            <option value="feature" selected>Feature</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="new">New</option>
+            <option value="backlog">Backlog</option>
+            <option value="developing">Developing</option>
+            <option value="testing">Testing</option>
+            <option value="staged">Staged</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority (1=urgent)</label>
+          <select id="fPriority">
+            <option value="1">P1 - Critical</option>
+            <option value="2">P2 - High</option>
+            <option value="3" selected>P3 - Medium</option>
+            <option value="4">P4 - Low</option>
+            <option value="5">P5 - Minimal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Effort</label>
+          <select id="fEffort">
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M" selected>M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Project</label>
+        <select id="fProject"></select>
+      </div>
+      <div class="form-group">
+        <label>Depends On</label>
+        <select id="fDependsOn"><option value="">None</option></select>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="fDesc" rows="2" placeholder="Short summary"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Details</label>
+        <textarea id="fDetails" rows="4" placeholder="Full specification, acceptance criteria, notes..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Assigned To</label>
+          <input type="text" id="fAssigned" placeholder="e.g. claude-dev-1">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div>
+        <button class="btn btn-danger" id="deleteBtn" onclick="deleteTask()" style="display:none">Delete</button>
+      </div>
+      <div class="right">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTask()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUSES = ['new', 'backlog', 'developing', 'testing', 'staged', 'closed'];
+const STATUS_LABELS = { new: 'New', backlog: 'Backlog', developing: 'Developing', testing: 'Testing', staged: 'Staged', closed: 'Closed' };
+const EFFORT_ORDER = { XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6 };
+
+let tasks = [];
+let projects = [];
+let editingId = null;
+let activeFilters = { types: ['simple','brainstorm','feature','maintenance'], efforts: ['XS','S','M','L','XL','XXL'] };
+let lastTasksHash = '';
+
+// API
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  return res.json();
+}
+
+async function loadProjects() {
+  projects = await api('/projects');
+  const sel = document.getElementById('projectSelect');
+  const fSel = document.getElementById('fProject');
+  sel.innerHTML = '<option value="">All Projects</option>';
+  fSel.innerHTML = '<option value="">None</option>';
+  projects.forEach(p => {
+    sel.innerHTML += `<option value="${p}">${p}</option>`;
+    fSel.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+}
+
+async function loadTasks() {
+  const project = document.getElementById('projectSelect').value;
+  const url = project ? `/tasks?project=${encodeURIComponent(project)}` : '/tasks';
+  const newTasks = await api(url);
+  const newHash = JSON.stringify(newTasks);
+  if (newHash === lastTasksHash) return;
+  lastTasksHash = newHash;
+  tasks = newTasks;
+  render();
+}
+
+// Filtering & Sorting
+function getFilteredTasks() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  return tasks.filter(t => {
+    if (!activeFilters.types.includes(t.type)) return false;
+    if (!activeFilters.efforts.includes(t.effort)) return false;
+    if (search) {
+      const hay = (t.title + ' ' + t.description + ' ' + t.details).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function sortTasks(list) {
+  const by = document.getElementById('sortSelect').value;
+  return [...list].sort((a, b) => {
+    if (by === 'priority') return a.priority - b.priority || (EFFORT_ORDER[a.effort]||3) - (EFFORT_ORDER[b.effort]||3);
+    if (by === 'effort') return (EFFORT_ORDER[a.effort]||3) - (EFFORT_ORDER[b.effort]||3) || a.priority - b.priority;
+    if (by === 'date') return new Date(b.created_at) - new Date(a.created_at);
+    if (by === 'alpha') return a.title.localeCompare(b.title);
+    return 0;
+  });
+}
+
+// Rendering
+function render() {
+  const board = document.getElementById('board');
+  const showClosed = document.getElementById('showClosed').checked;
+  const filtered = getFilteredTasks();
+  const visibleStatuses = showClosed ? STATUSES : STATUSES.filter(s => s !== 'closed');
+
+  board.innerHTML = visibleStatuses.map(status => {
+    const colTasks = sortTasks(filtered.filter(t => t.status === status));
+    return `
+      <div class="column" data-status="${status}"
+           ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'${status}')">
+        <div class="column-header">
+          ${STATUS_LABELS[status]}
+          <span class="count">${colTasks.length}</span>
+          ${status === 'new' ? '<button class="btn btn-primary" style="padding:2px 8px;font-size:11px" onclick="openModal()">+ New</button>' : ''}
+        </div>
+        <div class="column-body">
+          ${colTasks.length === 0 ? '<div class="empty">No tasks</div>' :
+            colTasks.map(t => renderCard(t)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderCard(t) {
+  return `
+    <div class="card" draggable="true" data-id="${t.id}" data-priority="${t.priority}"
+         ondragstart="handleDragStart(event,${t.id})" ondragend="handleDragEnd(event)"
+         onclick="openModal(${t.id})">
+      <div class="card-top">
+        <span class="badge badge-priority" data-p="${t.priority}">P${t.priority}</span>
+        <span class="badge badge-type ${t.type}">${t.type}</span>
+        <span class="badge badge-effort" data-effort="${t.effort}">${t.effort}</span>
+      </div>
+      <div class="card-title">${esc(t.title)}</div>
+      ${t.description ? `<div class="card-desc">${esc(t.description)}</div>` : ''}
+      <div class="card-footer">
+        <span>${t.project || ''}</span>
+        ${t.assigned_to ? `<span class="card-assignee">${esc(t.assigned_to)}</span>` : ''}
+      </div>
+      ${(() => { if (t.depends_on) { const dep = tasks.find(d => d.id === t.depends_on); if (dep && dep.status !== 'closed') return `<span style="color: var(--p1); font-size: 10px;">\u{1F512} Blocked by #${t.depends_on}</span>`; } return ''; })()}
+    </div>`;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Drag and Drop
+let dragId = null;
+
+function handleDragStart(e, id) {
+  dragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  requestAnimationFrame(() => e.target.classList.add('dragging'));
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+  dragId = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const col = e.target.closest('.column');
+  if (col && !col.classList.contains('drag-over')) {
+    document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+    col.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  const col = e.target.closest('.column');
+  if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+}
+
+async function handleDrop(e, newStatus) {
+  e.preventDefault();
+  document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+  const id = parseInt(e.dataTransfer.getData('text/plain'));
+  if (!id) return;
+  const task = tasks.find(t => t.id === id);
+  if (!task || task.status === newStatus) return;
+  await api(`/tasks/${id}`, { method: 'PATCH', body: { status: newStatus } });
+  await loadTasks();
+}
+
+// Modal
+function openModal(id) {
+  editingId = id || null;
+  const modal = document.getElementById('modalOverlay');
+  const title = document.getElementById('modalTitle');
+  const del = document.getElementById('deleteBtn');
+
+  // Populate depends_on dropdown
+  const depSelect = document.getElementById('fDependsOn');
+  depSelect.innerHTML = '<option value="">None</option>';
+  tasks.filter(t => t.status !== 'closed' && t.id !== id).forEach(t => {
+    depSelect.innerHTML += `<option value="${t.id}">#${t.id} - ${esc(t.title)}</option>`;
+  });
+
+  if (id) {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    title.textContent = 'Edit Task #' + t.id;
+    del.style.display = '';
+    document.getElementById('fTitle').value = t.title;
+    document.getElementById('fType').value = t.type;
+    document.getElementById('fStatus').value = t.status;
+    document.getElementById('fPriority').value = t.priority;
+    document.getElementById('fEffort').value = t.effort;
+    document.getElementById('fProject').value = t.project || '';
+    depSelect.value = t.depends_on ? String(t.depends_on) : '';
+    document.getElementById('fDesc').value = t.description;
+    document.getElementById('fDetails').value = t.details;
+    document.getElementById('fAssigned').value = t.assigned_to || '';
+  } else {
+    title.textContent = 'New Task';
+    del.style.display = 'none';
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fType').value = 'feature';
+    document.getElementById('fStatus').value = 'new';
+    document.getElementById('fPriority').value = '3';
+    document.getElementById('fEffort').value = 'M';
+    document.getElementById('fProject').value = document.getElementById('projectSelect').value || '';
+    depSelect.value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fDetails').value = '';
+    document.getElementById('fAssigned').value = '';
+  }
+  modal.classList.add('open');
+  document.getElementById('fTitle').focus();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+async function saveTask() {
+  const depVal = document.getElementById('fDependsOn').value;
+  const data = {
+    title: document.getElementById('fTitle').value.trim() || 'Untitled',
+    type: document.getElementById('fType').value,
+    status: document.getElementById('fStatus').value,
+    priority: parseInt(document.getElementById('fPriority').value),
+    effort: document.getElementById('fEffort').value,
+    project: document.getElementById('fProject').value,
+    depends_on: depVal ? parseInt(depVal) : null,
+    description: document.getElementById('fDesc').value.trim(),
+    details: document.getElementById('fDetails').value.trim(),
+    assigned_to: document.getElementById('fAssigned').value.trim() || null
+  };
+
+  if (editingId) {
+    await api(`/tasks/${editingId}`, { method: 'PATCH', body: data });
+  } else {
+    await api('/tasks', { method: 'POST', body: data });
+  }
+  closeModal();
+  await loadTasks();
+}
+
+async function deleteTask() {
+  if (!editingId || !confirm('Delete this task?')) return;
+  await api(`/tasks/${editingId}`, { method: 'DELETE' });
+  closeModal();
+  await loadTasks();
+}
+
+// Filter chips
+document.querySelectorAll('.chip[data-filter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('active');
+    const filterType = chip.dataset.filter === 'type' ? 'types' : 'efforts';
+    const value = chip.dataset.value;
+    if (chip.classList.contains('active')) {
+      activeFilters[filterType].push(value);
+    } else {
+      activeFilters[filterType] = activeFilters[filterType].filter(v => v !== value);
+    }
+    render();
+  });
+});
+
+// Event listeners
+document.getElementById('projectSelect').addEventListener('change', loadTasks);
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('showClosed').addEventListener('change', render);
+document.getElementById('sortSelect').addEventListener('change', render);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && document.getElementById('modalOverlay').classList.contains('open')) {
+    e.preventDefault();
+    saveTask();
+  }
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT') {
+    e.preventDefault();
+    openModal();
+  }
+});
+
+// Polling
+let pollTimer;
+async function startPolling() {
+  await loadTasks();
+  pollTimer = setInterval(loadTasks, 2000);
+}
+
+// Init
+(async () => {
+  await loadProjects();
+  await startPolling();
+})();
+</script>
+</body>
+</html>
