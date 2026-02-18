@@ -35,3 +35,28 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
 - **Claude** reads `data/tasks.json` directly, picks up backlog tasks, and runs an autonomous dev/test/deploy loop
 - **CLAUDE.md** contains the orchestration rules — customize it to fit your workflow
 - The board auto-refreshes so you can watch tasks move across columns in real time
+
+## More Details on How It Works
+- Control+Enter will add the new task from the New Task overlay (same as "Save" button)
+- The Types are for organizing task types:
+   - Feature is a generic new task
+   - Brainstorm will always prompt you for more detail
+   - Maintenence is for editing this project's functionality
+   - Simple is for human-only tasks, like paying your AWS bill!
+- States:
+   - New is for finalizing your thoughts.
+   - Backlog is where Claude looks for new tasks
+   - Dev is active development
+   - Test is active testing
+   - Staging is merge/commit/push
+   - Closed is archival
+- Changing 'assign to' to your user name will make Claude ignore that work item, but so will task Type 'Simple'
+
+## What should I do with this thing?
+- Make a task to add Light Mode. Mention "frontend design" if you have that skill; create the task against agent-tasker project, start in Backlog state.
+   - Claude will read the task board every 60 seconds, and automatically begin working on tasks by priority!
+- Make a task to update Readme.md in ~/source/repos/your-project; create the task against your-project. Give it as much detail as you like, treat Name, Description & Details as if they are prompt boxes! Create in or move to Backlog state, and work will begin!
+
+## Anything else?
+
+Fork me! Contribute!
