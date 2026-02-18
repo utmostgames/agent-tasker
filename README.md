@@ -15,14 +15,14 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
 
    ```
    cd ~/source/repos
-   git clone https://github.com/utmostgames/todos.git agent-tasks
+   git clone https://github.com/utmostgames/agent-tasker.git
    ```
 
 2. **Start Claude Code from the repo with permissions bypassed:**
 
    ```
-   cd agent-tasks
-   claude --dangerously-skip-permissions
+   cd agent-tasker
+   claude --dangerously-skip-permissions "start working"
    ```
 
 3. **Open the board** at [http://localhost:4000](http://localhost:4000)

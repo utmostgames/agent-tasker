@@ -1,23 +1,10 @@
 # Task Board - Claude Orchestration Rules
 
-## MANDATORY FIRST ACTION — Execute Before Anything Else
-
-**IMPORTANT: On EVERY new session, BEFORE responding to ANY user message, you MUST execute these startup steps. This is not optional. Even if the user's first message is a question or unrelated request, run this procedure FIRST, then address their message.**
-
-1. **Ensure the server is running.** Check if port 4000 is in use (`curl -s -o /dev/null -w "%{http_code}" http://localhost:4000`). If not reachable, start it in the background (`node server.js &` from the project root).
-2. Read `data/tasks.json`
-3. Summarize the board state: how many tasks per status, any in-progress work
-4. Identify the highest-priority `backlog` task (lowest priority number; among ties, prefer smallest effort)
-5. Present the chosen task to the human: show its ID, title, type, priority, effort, project, and description
-6. **If the user's message explicitly starts the work loop** (e.g., "start working", "run the worker loop", "start work"), skip the confirmation and begin working immediately — that message IS the approval.
-7. **Otherwise** (session launch with no explicit start command): Ask "Ready to start the work loop?" and wait for human approval before proceeding.
-8. If the user's opening message contained a separate question or request, address it after the summary.
-
 ## Overview
 This is a shared task board at `data/tasks.json`. Humans interact via the web UI at `http://localhost:4000`. Claude instances read and write the JSON file directly.
 
 ## Work Loop
-Once the human has approved (either explicitly or via a start command), run this loop autonomously until the backlog is empty or the human interrupts:
+Once the human confirms "yes", run this loop autonomously until the backlog is empty or the human interrupts:
 
 ### Step 1: Brainstorm (if needed)
 - If the task effort is NOT `XS`, use the `superpowers:brainstorming` skill to analyze the task before development
