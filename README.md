@@ -39,13 +39,13 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
 ## More Details on How It Works
 - Control+Enter will add the new task from the New Task overlay (same as "Save" button)
 - The Types are for organizing task types:
-   - Feature is a generic new task
-   - Brainstorm will always prompt you for more detail
-   - Maintenence is for editing this project's functionality
-   - Simple is for human-only tasks, like paying your AWS bill!
+   - ***Feature*** is a generic new task
+   - ***Brainstorm*** will always prompt you for more detail
+   - ***Maintenence*** is for editing this project's functionality
+   - ***Simple*** is for human-only tasks, like paying your AWS bill!
 - States:
    - New is for finalizing your thoughts.
-   - Backlog is where Claude looks for new tasks
+   - ***Backlog*** is where Claude looks for new tasks
    - Dev is active development
    - Test is active testing
    - Staging is merge/commit/push
@@ -53,10 +53,12 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
 - Changing 'assign to' to your user name will make Claude ignore that work item, but so will task Type 'Simple'
 
 ## What should I do with this thing?
-- Make a task to add Light Mode. Mention "frontend design" if you have that skill; create the task against agent-tasker project, start in Backlog state.
+- Throughout the day, as you think of ANYTHING you need to do, add a task! Need milk? Simple! Need a planning doc ready to review? Brainstorm!
+- Make a task to add Light Mode. Mention "frontend design" if you have that skill; create the task against ***agent-tasker*** project, start in Backlog state.
    - Claude will read the task board every 60 seconds, and automatically begin working on tasks by priority!
-- Make a task to update Readme.md in ~/source/repos/your-project; create the task against your-project. Give it as much detail as you like, treat Name, Description & Details as if they are prompt boxes! Create in or move to Backlog state, and work will begin!
+- Make a task to update Readme.md in ~/source/repos/your-project; create the task against ***your-project***. Give it as much detail as you like, treat Name, Description & Details as if they are prompt boxes! Create in or move to Backlog state, and work will begin!
 
 ## Anything else?
 
-Fork me! Contribute!
+- Fork me!
+- Contribute!
