@@ -84,6 +84,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .card { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 10px 10px 14px; cursor: grab; position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
 .card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
 .card.dragging { opacity: 0.4; }
+.drag-clone { position: fixed; pointer-events: none; opacity: 0.85; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 .card::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; }
 .card[data-priority="1"]::before { background: var(--p1); }
 .card[data-priority="2"]::before { background: var(--p2); }
@@ -431,6 +432,129 @@ async function handleDrop(e, newStatus) {
   await api(`/tasks/${id}`, { method: 'PATCH', body: { status: newStatus } });
   await loadTasks();
 }
+
+// Touch Drag and Drop (mobile support)
+let touchDragId = null;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchClone = null;
+let touchDragging = false;
+let touchOffsetX = 0;
+let touchOffsetY = 0;
+let touchHandledTap = false;
+
+// Suppress synthetic click after touch-tap to avoid double openModal
+document.getElementById('board').addEventListener('click', function(e) {
+  if (touchHandledTap) {
+    const card = e.target.closest('.card');
+    if (card) {
+      e.stopPropagation();
+      e.preventDefault();
+      touchHandledTap = false;
+      return;
+    }
+  }
+}, true);
+
+document.getElementById('board').addEventListener('touchstart', function(e) {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const touch = e.touches[0];
+  touchDragId = parseInt(card.dataset.id);
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchDragging = false;
+  touchClone = null;
+  const rect = card.getBoundingClientRect();
+  touchOffsetX = touch.clientX - rect.left;
+  touchOffsetY = touch.clientY - rect.top;
+}, { passive: true });
+
+document.getElementById('board').addEventListener('touchmove', function(e) {
+  if (touchDragId === null) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartX;
+  const dy = touch.clientY - touchStartY;
+
+  if (!touchDragging) {
+    if (Math.sqrt(dx * dx + dy * dy) < 8) return;
+    // Enter drag mode
+    touchDragging = true;
+    const card = document.querySelector(`.card[data-id="${touchDragId}"]`);
+    if (!card) return;
+    card.classList.add('dragging');
+    touchClone = card.cloneNode(true);
+    touchClone.classList.remove('dragging');
+    touchClone.classList.add('drag-clone');
+    const rect = card.getBoundingClientRect();
+    touchClone.style.width = rect.width + 'px';
+    touchClone.style.left = (touch.clientX - touchOffsetX) + 'px';
+    touchClone.style.top = (touch.clientY - touchOffsetY) + 'px';
+    document.body.appendChild(touchClone);
+  }
+
+  if (touchDragging && touchClone) {
+    e.preventDefault();
+    touchClone.style.left = (touch.clientX - touchOffsetX) + 'px';
+    touchClone.style.top = (touch.clientY - touchOffsetY) + 'px';
+
+    // Hit-test columns under finger
+    touchClone.style.display = 'none';
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    touchClone.style.display = '';
+    const col = el ? el.closest('.column') : null;
+    document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+    if (col) col.classList.add('drag-over');
+  }
+}, { passive: false });
+
+document.getElementById('board').addEventListener('touchend', function(e) {
+  if (touchDragId === null) return;
+  const id = touchDragId;
+  const wasDragging = touchDragging;
+
+  if (wasDragging) {
+    // Determine drop target
+    if (touchClone) {
+      touchClone.style.display = 'none';
+    }
+    const lastTouch = e.changedTouches[0];
+    const el = document.elementFromPoint(lastTouch.clientX, lastTouch.clientY);
+    const col = el ? el.closest('.column') : null;
+
+    // Clean up visual state
+    if (touchClone) {
+      touchClone.remove();
+    }
+    const card = document.querySelector(`.card[data-id="${id}"]`);
+    if (card) card.classList.remove('dragging');
+    document.querySelectorAll('.column.drag-over').forEach(c => c.classList.remove('drag-over'));
+
+    // Suppress synthetic click after drag
+    touchHandledTap = true;
+
+    if (col) {
+      const newStatus = col.dataset.status;
+      const task = tasks.find(t => t.id === id);
+      if (task && task.status !== newStatus) {
+        api(`/tasks/${id}`, { method: 'PATCH', body: { status: newStatus } }).then(() => loadTasks());
+      }
+    }
+  } else {
+    // It was a tap, not a drag — open the modal
+    touchHandledTap = true;
+    openModal(id);
+  }
+
+  // Reset touch state
+  touchDragId = null;
+  touchStartX = 0;
+  touchStartY = 0;
+  touchClone = null;
+  touchDragging = false;
+  touchOffsetX = 0;
+  touchOffsetY = 0;
+}, { passive: true });
 
 // Modal
 function openModal(id) {
