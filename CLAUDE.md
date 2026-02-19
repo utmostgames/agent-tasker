@@ -137,6 +137,7 @@ new ──→ backlog ──→ developing ──→ testing ──→ staged �
 7. **Set `tested_by`** when moving status from `testing` to `staged` or back.
 8. **Dependency check.** Before picking up a `backlog` task, check if `depends_on` is set. If the referenced task's status is not `closed`, skip this task and move to the next eligible one.
 9. **Human-assigned tasks.** Skip any task where `assigned_to` is a non-Claude identifier (i.e., does not start with `claude-`). Human-assigned tasks are for human work only.
+10. **Skip `simple` type tasks.** Tasks with `type: "simple"` are human-only work items (e.g., system administration, manual installs). Claude must never pick up or work on `simple` tasks — skip them entirely when scanning the backlog.
 
 ## Priority Ordering
 Always work on the highest-priority (lowest number) available task first:
