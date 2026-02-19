@@ -442,6 +442,7 @@ let touchDragging = false;
 let touchOffsetX = 0;
 let touchOffsetY = 0;
 let touchHandledTap = false;
+let touchStartTime = 0;
 
 // Suppress synthetic click after touch-tap to avoid double openModal
 document.getElementById('board').addEventListener('click', function(e) {
@@ -465,6 +466,7 @@ document.getElementById('board').addEventListener('touchstart', function(e) {
   touchStartY = touch.clientY;
   touchDragging = false;
   touchClone = null;
+  touchStartTime = Date.now();
   const rect = card.getBoundingClientRect();
   touchOffsetX = touch.clientX - rect.left;
   touchOffsetY = touch.clientY - rect.top;
@@ -477,7 +479,9 @@ document.getElementById('board').addEventListener('touchmove', function(e) {
   const dy = touch.clientY - touchStartY;
 
   if (!touchDragging) {
-    if (Math.sqrt(dx * dx + dy * dy) < 8) return;
+    // Require both 15px distance AND 200ms hold time to avoid accidental drags on mobile
+    const elapsed = Date.now() - touchStartTime;
+    if (Math.sqrt(dx * dx + dy * dy) < 15 || elapsed < 200) return;
     // Enter drag mode
     touchDragging = true;
     const card = document.querySelector(`.card[data-id="${touchDragId}"]`);
@@ -554,6 +558,7 @@ document.getElementById('board').addEventListener('touchend', function(e) {
   touchDragging = false;
   touchOffsetX = 0;
   touchOffsetY = 0;
+  touchStartTime = 0;
 }, { passive: true });
 
 // Modal
