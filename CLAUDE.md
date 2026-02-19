@@ -66,12 +66,13 @@ The orchestrator MAY run up to **3 dev workers concurrently** to speed up throug
 ## Idle Watch Loop
 When the backlog is empty, do not exit. Instead:
 1. Report "Board clear — watching for new tasks (checking every 1 minute)"
-2. **Reset the worker counter.** The next dev/test workers start numbering from the next task ID (e.g., `claude-dev-{task_id}`), not from previous session IDs. This keeps worker names aligned with task IDs.
-3. Wait 1 minute (use `sleep 60` via Bash)
-4. Read `data/tasks.json` again
-5. If a `backlog` task exists: re-enter the work loop from Step 1 (no need to ask permission again — it was granted at session start)
-6. If still empty: repeat from step 3
-7. Continue this watch loop for the lifetime of the session, until the human says `stop` or `pause`
+2. **Clear context.** Summarize completed work in a short status report, then release any large file contents or intermediate state from memory. This keeps the session lean for long-running monitoring.
+3. **Reset the worker counter.** The next dev/test workers start numbering from the next task ID (e.g., `claude-dev-{task_id}`), not from previous session IDs. This keeps worker names aligned with task IDs.
+4. Wait 1 minute (use `sleep 60` via Bash)
+5. Read `data/tasks.json` again
+6. If a `backlog` task exists: re-enter the work loop from Step 1 (no need to ask permission again — it was granted at session start)
+7. If still empty: repeat from step 4
+8. Continue this watch loop for the lifetime of the session, until the human says `stop` or `pause`
 
 ## Human Interrupt
 The human can interrupt the work loop at any time between task cycles:
