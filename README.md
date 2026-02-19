@@ -2,7 +2,7 @@
 
 A lightweight localhost Kanban board where humans create tasks through a web UI and Claude Code agents autonomously develop, test, and deploy them.
 
-![Project Screenshot](images/agent-tasker.jpg)
+![Project Screenshot](agent-tasker.jpg)
 
 ## Prerequisites
 
