@@ -36,6 +36,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .btn-primary:hover { background: #2ea043; }
 .btn-danger { color: #f85149; }
 .btn-danger:hover { background: rgba(248,81,73,0.15); }
+.btn-push { background: rgba(248,81,73,0.15); border-color: var(--p1); color: var(--p1); font-weight: 600; }
+.btn-push:hover { background: rgba(248,81,73,0.3); border-color: #ff6b63; color: #ff6b63; }
 
 /* Filter Bar */
 .filterbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
@@ -142,12 +144,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   .filterbar { padding: 4px 8px; gap: 4px; }
   .chip { font-size: 10px; padding: 1px 5px; }
 
-  /* Mobile overlay: compact, no header, sheet-style from bottom */
+  /* Mobile overlay: compact, no header bar, sheet-style from bottom */
   .modal-overlay { padding-top: 0; align-items: flex-end; }
   .modal { width: 100%; max-height: 70vh; border-radius: 12px 12px 0 0; border-bottom: none; }
-  .modal-header { border-bottom: none; padding: 8px 12px 0; }
-  .modal-header h2 { display: none; }
-  .modal-header .btn { font-size: 18px; margin-left: auto; }
+  .modal-header { display: none; }
+  .mobile-close-btn { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; font-size: 18px; padding: 0 6px; line-height: 1; border: none; background: transparent; color: var(--text-muted); cursor: pointer; }
+  .mobile-close-btn:hover { color: var(--text); }
   .modal-body { padding: 8px 12px 6px; gap: 6px; }
   .modal-body .form-group label { font-size: 10px; }
   .modal-body .form-group input,
@@ -174,6 +176,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .modal-footer { display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); }
 .modal-footer .right { display: flex; gap: 8px; }
 
+/* Mobile close button (hidden on desktop) */
+.mobile-close-btn { display: none; }
+.title-label-row { display: flex; align-items: center; }
+
 /* Empty state */
 .empty { padding: 20px; text-align: center; color: var(--text-dim); font-size: 12px; }
 
@@ -189,6 +195,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   <select id="projectSelect"><option value="">All Projects</option></select>
   <input type="search" id="searchInput" placeholder="Search tasks...">
   <div class="spacer"></div>
+  <button class="btn btn-push" id="pushRemoteBtn" onclick="pushRemote()">Push All Staged to Remote</button>
   <label style="font-size:12px;display:flex;align-items:center;gap:4px;color:var(--text-muted);cursor:pointer">
     <input type="checkbox" id="showClosed"> Closed
   </label>
@@ -233,8 +240,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
       <button class="btn" onclick="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>Title</label>
+      <div class="form-group form-group-title">
+        <div class="title-label-row">
+          <label>Title</label>
+          <button class="btn mobile-close-btn" onclick="closeModal()">&times;</button>
+        </div>
         <input type="text" id="fTitle" placeholder="Task title">
       </div>
       <div class="form-row">
@@ -713,6 +723,27 @@ async function deleteTask() {
   await api(`/tasks/${editingId}`, { method: 'DELETE' });
   closeModal();
   await loadTasks();
+}
+
+// Push Remote
+async function pushRemote() {
+  const btn = document.getElementById('pushRemoteBtn');
+  btn.disabled = true;
+  btn.textContent = 'Requesting...';
+  try {
+    await api('/push-remote', { method: 'POST', body: {} });
+    btn.textContent = 'Requested!';
+    setTimeout(() => {
+      btn.textContent = 'Push All Staged to Remote';
+      btn.disabled = false;
+    }, 2000);
+  } catch {
+    btn.textContent = 'Error!';
+    setTimeout(() => {
+      btn.textContent = 'Push All Staged to Remote';
+      btn.disabled = false;
+    }, 2000);
+  }
 }
 
 // Filter chips

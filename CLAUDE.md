@@ -44,11 +44,20 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
   - Navigate to the project folder
   - Check if it's a git repo (`git status`)
     - If git repo: stage and commit changes, then merge the development branch into `main` (`git checkout main && git merge <branch>`)
-    - If git repo with remote: also push `main`
+    - **Do NOT push to remote automatically.** Pushing is human-initiated via the "Push All Staged to Remote" button in the UI (see Step 4.5).
     - If not a git repo: skip git operations
   - **Project-specific: `todos`** — if the completed task modified server.js or any server-side code, restart the Node server (kill the process on port 4000, then run `node server.js` in the background)
   - Update tasks.json: set `status` to `closed`, log history
 - If the task was moved back to `developing` (test failure): loop back to Step 2 with a fresh dev worker
+
+### Step 4.5: Push Remote (on request)
+- Check if `data/push-remote.flag` exists
+- If the flag file exists:
+  - For each project that has tasks recently moved to `closed` (or any project with unpushed commits on `main`), navigate to that project folder and run `git push` on `main`
+  - Delete the flag file after pushing: `rm data/push-remote.flag`
+  - Log which projects were pushed (to stdout or a history entry)
+- If the flag does not exist: skip this step (no push requested)
+- This flag can also be created manually from the command line: `touch data/push-remote.flag`
 
 ### Step 5: Next Task
 - Read `data/tasks.json` for the next highest-priority `backlog` task
@@ -70,11 +79,12 @@ When the backlog is empty, do not exit. Instead:
 1. Report "Board clear — watching for new tasks (checking every 1 minute)"
 2. **Clear context.** Summarize completed work in a short status report, then release any large file contents or intermediate state from memory. This keeps the session lean for long-running monitoring.
 3. **Reset the worker counter.** The next dev/test workers start numbering from the next task ID (e.g., `claude-dev-{task_id}`), not from previous session IDs. This keeps worker names aligned with task IDs.
-4. Wait 1 minute (use `sleep 60` via Bash)
-5. Read `data/tasks.json` again
-6. If a `backlog` task exists: re-enter the work loop from Step 1 (no need to ask permission again — it was granted at session start)
-7. If still empty: repeat from step 4
-8. Continue this watch loop for the lifetime of the session, until the human says `stop` or `pause`
+4. **Check push flag.** Run Step 4.5 (check if `data/push-remote.flag` exists and push if so).
+5. Wait 1 minute (use `sleep 60` via Bash)
+6. Read `data/tasks.json` again
+7. If a `backlog` task exists: re-enter the work loop from Step 1 (no need to ask permission again — it was granted at session start)
+8. If still empty: repeat from step 5
+9. Continue this watch loop for the lifetime of the session, until the human says `stop` or `pause`
 
 ## Human Interrupt
 The human can interrupt the work loop at any time between task cycles:
