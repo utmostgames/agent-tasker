@@ -45,8 +45,8 @@ run_claude_with_monitor() {
   # Clean up any stale exit flag
   rm -f "$EXIT_FLAG"
 
-  # Launch Claude in background
-  (cd "$SCRIPT_DIR" && claude --dangerously-skip-permissions "start working") &
+  # Launch Claude in background (exec replaces subshell so kill targets Claude directly)
+  (cd "$SCRIPT_DIR" && exec claude --dangerously-skip-permissions "start working") &
   local claude_pid=$!
 
   # Monitor for exit flag while Claude is running
