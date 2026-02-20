@@ -70,7 +70,10 @@ This sets up the script to start automatically when you log in to your desktop s
 ```bash
 mkdir -p ~/.config/systemd/user
 
-cat > ~/.config/systemd/user/run-claude.service << 'EOF'
+# Set this to the absolute path of your agent-tasker directory
+AGENT_TASKER_DIR="$(cd "$(dirname "$0")/../.." && pwd)/agent-tasker"
+
+cat > ~/.config/systemd/user/run-claude.service << EOF
 [Unit]
 Description=Claude Task Board Monitor
 After=network-online.target
@@ -78,8 +81,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/mujadaddy/source/repos/agent-tasker
-ExecStart=/home/mujadaddy/source/repos/agent-tasker/run-claude.sh
+WorkingDirectory=${AGENT_TASKER_DIR}
+ExecStart=${AGENT_TASKER_DIR}/run-claude.sh
 Restart=on-failure
 RestartSec=30
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:%h/.local/bin:%h/.npm-global/bin
@@ -89,7 +92,9 @@ WantedBy=default.target
 EOF
 ```
 
-> **Note:** Adjust the `PATH` in the `Environment` line if your `claude` or `jq` binaries are installed elsewhere. Run `which claude` and `which jq` to find their locations and ensure those directories are included.
+> **Note:** Replace `AGENT_TASKER_DIR` with the absolute path to your `agent-tasker` directory if not running the snippet above as a script. You can find it by running `cd /path/to/agent-tasker && pwd`.
+>
+> Also adjust the `PATH` in the `Environment` line if your `claude` or `jq` binaries are installed elsewhere. Run `which claude` and `which jq` to find their locations and ensure those directories are included.
 
 ### 2. Enable and start
 
@@ -137,12 +142,14 @@ crontab -e
 ### 2. Add the @reboot entry
 
 ```cron
-@reboot /home/mujadaddy/source/repos/agent-tasker/run-claude.sh >> /home/mujadaddy/source/repos/agent-tasker/logs/run-claude.log 2>&1
+@reboot /path/to/agent-tasker/run-claude.sh >> /path/to/agent-tasker/logs/run-claude.log 2>&1
 ```
+
+> **Note:** Replace `/path/to/agent-tasker` with the absolute path to your `agent-tasker` directory.
 
 Make sure the logs directory exists:
 ```bash
-mkdir -p /home/mujadaddy/source/repos/agent-tasker/logs
+mkdir -p /path/to/agent-tasker/logs
 ```
 
 ### 3. Verify
@@ -154,8 +161,8 @@ ps aux | grep run-claude.sh
 
 > **Caveat:** cron runs with a minimal environment. If `claude` or `jq` are not in the default PATH, use their full paths in the script or add a PATH export at the top of your crontab:
 > ```cron
-> PATH=/usr/local/bin:/usr/bin:/bin:/home/mujadaddy/.local/bin
-> @reboot /home/mujadaddy/source/repos/agent-tasker/run-claude.sh >> ...
+> PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin
+> @reboot /path/to/agent-tasker/run-claude.sh >> /path/to/agent-tasker/logs/run-claude.log 2>&1
 > ```
 
 ## Customization
