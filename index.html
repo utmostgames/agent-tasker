@@ -491,10 +491,8 @@ document.getElementById('board').addEventListener('touchstart', function(e) {
   if (!card) return;
   const touch = e.touches[0];
   const rect = card.getBoundingClientRect();
-  const touchRelX = touch.clientX - rect.left;
-  const leftThird = rect.width / 3;
 
-  // Only allow drag initiation from the left third of the card on touch devices
+  // Allow drag initiation from anywhere on the card on touch devices
   touchDragId = parseInt(card.dataset.id);
   touchStartX = touch.clientX;
   touchStartY = touch.clientY;
@@ -503,8 +501,8 @@ document.getElementById('board').addEventListener('touchstart', function(e) {
   touchStartTime = Date.now();
   touchOffsetX = touch.clientX - rect.left;
   touchOffsetY = touch.clientY - rect.top;
-  // Mark whether the touch started in the drag zone (left third)
-  touchInDragZone = touchRelX <= leftThird;
+  // Entire card is a drag zone on mobile
+  touchInDragZone = true;
   touchScrolling = false;
 }, { passive: true });
 
@@ -520,16 +518,15 @@ document.getElementById('board').addEventListener('touchmove', function(e) {
     touchScrolling = true;
   }
 
-  // When touch started in the drag zone (left third of card), prevent native
-  // horizontal scroll EARLY — before the drag threshold is met — so the browser
-  // doesn't steal the gesture for .board's overflow-x: auto scrolling.
+  // Prevent native horizontal scroll EARLY — before the drag threshold is met —
+  // so the browser doesn't steal the gesture for .board's overflow-x: auto scrolling.
   // Only suppress when movement is not primarily vertical (allow column scrolling).
   if (touchInDragZone && !touchDragging && !touchScrolling) {
     e.preventDefault();
   }
 
   if (!touchDragging) {
-    // Only allow drag if touch started in the left third of the card
+    // Only allow drag if touch started on a card
     if (!touchInDragZone) return;
     // Require both 15px distance AND 200ms hold time to avoid accidental drags on mobile
     const elapsed = Date.now() - touchStartTime;
