@@ -9,6 +9,7 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
 ### Step 1: Brainstorm (if needed)
 - If the task effort is NOT `XS`, use the `superpowers:brainstorming` skill to analyze the task before development
 - Update the task `details` field with the brainstorm output
+- **Create follow-up tasks:** If brainstorming breaks a large task into sub-phases or sub-tasks, create those as separate tasks in `backlog` with proper `depends_on` chains. This makes the work visible on the board and lets the human re-prioritize.
 
 ### Step 1.5: Create Development Branch
 - Before any development begins, create a new git branch **from `main`** in the target project:
@@ -26,6 +27,7 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
   - The project working directory: the absolute path to `../repos/{project}` relative to this repo
   - Instruction to do the development work in that project folder
   - Instruction to update `data/tasks.json` when done: set `status` to `testing`, set `developed_by` to its worker ID, log history
+- **Keep prompts lean:** Do NOT paste tasks.json diffs, full JSON blobs, or large data excerpts into worker prompts. Give the worker the task ID and file path — it can read what it needs.
 
 ### Step 3: Dispatch TEST Worker
 - After the dev worker completes, read `data/tasks.json` to confirm the task is in `testing`
