@@ -471,6 +471,7 @@ let touchOffsetY = 0;
 let touchHandledTap = false;
 let touchStartTime = 0;
 let touchInDragZone = false;
+let touchScrolling = false;
 
 // Suppress synthetic click after touch-tap to avoid double openModal
 document.getElementById('board').addEventListener('click', function(e) {
@@ -504,6 +505,7 @@ document.getElementById('board').addEventListener('touchstart', function(e) {
   touchOffsetY = touch.clientY - rect.top;
   // Mark whether the touch started in the drag zone (left third)
   touchInDragZone = touchRelX <= leftThird;
+  touchScrolling = false;
 }, { passive: true });
 
 document.getElementById('board').addEventListener('touchmove', function(e) {
@@ -512,12 +514,20 @@ document.getElementById('board').addEventListener('touchmove', function(e) {
   const dx = touch.clientX - touchStartX;
   const dy = touch.clientY - touchStartY;
 
+  // Detect scrolling: if significant Y movement, mark as scrolling
+  // This prevents modal open when user scrolls a column and releases on a card
+  if (!touchDragging && Math.abs(dy) > 10) {
+    touchScrolling = true;
+  }
+
   if (!touchDragging) {
     // Only allow drag if touch started in the left third of the card
     if (!touchInDragZone) return;
     // Require both 15px distance AND 200ms hold time to avoid accidental drags on mobile
     const elapsed = Date.now() - touchStartTime;
     if (Math.sqrt(dx * dx + dy * dy) < 15 || elapsed < 200) return;
+    // If user was scrolling, don't enter drag mode
+    if (touchScrolling) return;
     // Enter drag mode
     touchDragging = true;
     const card = document.querySelector(`.card[data-id="${touchDragId}"]`);
@@ -580,6 +590,9 @@ document.getElementById('board').addEventListener('touchend', function(e) {
         api(`/tasks/${id}`, { method: 'PATCH', body: { status: newStatus } }).then(() => loadTasks());
       }
     }
+  } else if (touchScrolling) {
+    // User was scrolling the column — do NOT open the modal
+    touchHandledTap = true;
   } else {
     // It was a tap, not a drag — open the modal
     touchHandledTap = true;
@@ -596,6 +609,7 @@ document.getElementById('board').addEventListener('touchend', function(e) {
   touchOffsetY = 0;
   touchStartTime = 0;
   touchInDragZone = false;
+  touchScrolling = false;
 }, { passive: true });
 
 // Modal
