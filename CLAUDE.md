@@ -41,24 +41,24 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
   - On PASS: update tasks.json — set `status` to `staged`, set `tested_by` to its worker ID, log history
   - On FAIL: update tasks.json — set `status` to `developing`, add failure notes to `details`, log history
 
-### Step 4: Stage and Close
+### Step 4: Merge to Main
 - After the test worker completes, read `data/tasks.json`
 - If the task is in `staged`:
   - Navigate to the project folder
   - Check if it's a git repo (`git status`)
     - If git repo: stage and commit changes, then merge the development branch into `main` (`git checkout main && git merge <branch>`)
     - **Push rules by task type:**
-      - `maintenance` tasks: **auto-push to remote** (`git push` on `main`) immediately after merge
-      - All other types (`feature`, `brainstorm`, `simple`): **Do NOT push automatically.** Pushing is human-initiated via the "Push All Staged to Remote" button in the UI (see Step 4.5).
-    - If not a git repo: skip git operations
+      - `maintenance` tasks: **auto-push to remote** (`git push` on `main`) immediately after merge, then set `status` to `closed`, log history
+      - All other types (`feature`, `brainstorm`, `simple`): **Do NOT push automatically.** Leave the task in `staged` status. Pushing is human-initiated via the "Push All Staged to Remote" button in the UI (see Step 4.5), which also moves tasks to `closed`.
+    - If not a git repo: skip git operations, set `status` to `closed`, log history
   - **Project-specific: `todos`** — if the completed task modified server.js or any server-side code, restart the Node server (kill the process on port 4000, then run `node server.js` in the background)
-  - Update tasks.json: set `status` to `closed`, log history
 - If the task was moved back to `developing` (test failure): loop back to Step 2 with a fresh dev worker
 
-### Step 4.5: Push Remote (on request)
+### Step 4.5: Push Remote and Close (on request)
 - Check if `data/push-remote.flag` exists
 - If the flag file exists:
-  - For each project that has tasks recently moved to `closed` (or any project with unpushed commits on `main`), navigate to that project folder and run `git push` on `main`
+  - For each project that has tasks in `staged` status (or any project with unpushed commits on `main`), navigate to that project folder and run `git push` on `main`
+  - After a successful push, move all `staged` tasks for that project to `closed` (set `status` to `closed`, log history)
   - Delete the flag file after pushing: `rm data/push-remote.flag`
   - Log which projects were pushed (to stdout or a history entry)
 - **Flag expiry:** If the flag exists but there are no tasks in `staged` status and no unpushed commits on any project's `main`, delete the flag without pushing (staging is empty, nothing to push).
@@ -136,7 +136,8 @@ Always follow this pattern:
 
 ```
 new ──→ backlog ──→ developing ──→ testing ──→ staged ──→ closed
- (human only)  (claim it)    (work done)   (test pass) (deployed)
+ (human only)  (claim it)    (work done)   (test pass) (pushed to remote)
+                                             (merged to main)
 ```
 
 ### Critical Rules
