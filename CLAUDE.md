@@ -44,7 +44,9 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
   - Navigate to the project folder
   - Check if it's a git repo (`git status`)
     - If git repo: stage and commit changes, then merge the development branch into `main` (`git checkout main && git merge <branch>`)
-    - **Do NOT push to remote automatically.** Pushing is human-initiated via the "Push All Staged to Remote" button in the UI (see Step 4.5).
+    - **Push rules by task type:**
+      - `maintenance` tasks: **auto-push to remote** (`git push` on `main`) immediately after merge
+      - All other types (`feature`, `brainstorm`, `simple`): **Do NOT push automatically.** Pushing is human-initiated via the "Push All Staged to Remote" button in the UI (see Step 4.5).
     - If not a git repo: skip git operations
   - **Project-specific: `todos`** — if the completed task modified server.js or any server-side code, restart the Node server (kill the process on port 4000, then run `node server.js` in the background)
   - Update tasks.json: set `status` to `closed`, log history
