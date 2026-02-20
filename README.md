@@ -9,6 +9,7 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
 - **An understanding of the inherent risks of allowing AI a free hand to assist you**
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with the [obra:superpowers](https://github.com/anthropics/claude-code-plugins) plugin
 - [Node.js](https://nodejs.org/) to run the web board
+- [jq](https://jqlang.github.io/jq/) (used by the launcher script)
 - A browser to view it
 
 ## Getting Started
@@ -20,12 +21,14 @@ A lightweight localhost Kanban board where humans create tasks through a web UI 
    git clone https://github.com/utmostgames/agent-tasker.git
    ```
 
-2. **Start Claude Code from the repo with permissions bypassed:**
+2. **Launch the agent loop:**
 
    ```
    cd agent-tasker
-   claude --dangerously-skip-permissions "start working"
+   ./run-claude.sh
    ```
+
+   See [docs/run-claude.md](docs/run-claude.md) for background running, systemd setup, and more options.
 
 3. **Open the board** at [http://localhost:4000](http://localhost:4000)
 
