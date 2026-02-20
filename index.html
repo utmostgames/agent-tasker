@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Task Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0d1117;
@@ -25,10 +28,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 /* Top Bar */
 .topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.topbar h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+.topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar-center { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar h1 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; white-space: nowrap; letter-spacing: -0.5px; background: linear-gradient(135deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .topbar select, .topbar input { background: var(--bg-tertiary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 10px; font-size: 13px; outline: none; }
 .topbar select:focus, .topbar input:focus { border-color: var(--p4); }
-.topbar input[type="search"] { width: 220px; }
+.topbar input[type="search"] { width: 200px; }
 .topbar .spacer { flex: 1; }
 .btn { background: var(--bg-tertiary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .btn:hover { border-color: var(--border-hover); background: var(--border); }
@@ -40,7 +46,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .btn-push:hover { background: rgba(248,81,73,0.3); border-color: #ff6b63; color: #ff6b63; }
 
 /* Filter Bar */
-.filterbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.filterbar { display: flex; align-items: center; gap: 8px; padding: 6px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 .filter-group { display: flex; align-items: center; gap: 4px; }
 .filter-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-right: 4px; }
 .chip { font-size: 11px; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; user-select: none; background: transparent; color: var(--text-muted); }
@@ -165,8 +171,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
   .badge { font-size: 9px; padding: 1px 4px; }
   .card-footer { margin-top: 4px; font-size: 9px; }
   .topbar { padding: 6px 8px; gap: 6px; flex-wrap: wrap; }
-  .topbar h1 { font-size: 14px; }
-  .topbar input[type="search"] { width: 140px; }
+  .topbar h1 { font-size: 16px; }
+  .topbar input[type="search"] { width: 120px; }
+  .topbar-left { gap: 6px; }
+  .topbar-center { gap: 6px; justify-content: flex-start; }
+  .topbar-right { flex-shrink: 0; }
+  .topbar-left, .topbar-center, .topbar-right { flex-wrap: wrap; }
   .filterbar { padding: 4px 8px; gap: 4px; }
   .chip { font-size: 10px; padding: 1px 5px; }
 
@@ -191,21 +201,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 
 <!-- Top Bar -->
 <div class="topbar">
-  <h1>Task Board</h1>
-  <select id="projectSelect"><option value="">All Projects</option></select>
-  <input type="search" id="searchInput" placeholder="Search tasks...">
-  <div class="spacer"></div>
-  <button class="btn btn-push" id="pushRemoteBtn" onclick="pushRemote()">Push All Staged to Remote</button>
-  <label style="font-size:12px;display:flex;align-items:center;gap:4px;color:var(--text-muted);cursor:pointer">
-    <input type="checkbox" id="showClosed"> Closed
-  </label>
-  <select id="sortSelect" class="sort-select" title="Sort by">
-    <option value="priority">Priority</option>
-    <option value="effort">Effort</option>
-    <option value="date">Newest</option>
-    <option value="alpha">A-Z</option>
-  </select>
-  <button class="btn btn-primary" onclick="openModal()">+ New Task</button>
+  <div class="topbar-left">
+    <button class="btn btn-primary" onclick="openModal()">+ New Task</button>
+    <h1>Task Board</h1>
+  </div>
+  <div class="topbar-center">
+    <select id="projectSelect"><option value="">All Projects</option></select>
+    <input type="search" id="searchInput" placeholder="Search tasks...">
+    <select id="sortSelect" class="sort-select" title="Sort by">
+      <option value="priority">Priority</option>
+      <option value="effort">Effort</option>
+      <option value="date">Newest</option>
+      <option value="alpha">A-Z</option>
+    </select>
+    <label style="font-size:12px;display:flex;align-items:center;gap:4px;color:var(--text-muted);cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="showClosed"> Closed
+    </label>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-push" id="pushRemoteBtn" onclick="pushRemote()">Push All Staged to Remote</button>
+  </div>
 </div>
 
 <!-- Filter Bar -->
