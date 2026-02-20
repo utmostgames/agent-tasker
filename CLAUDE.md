@@ -58,6 +58,7 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
   - For each project that has tasks recently moved to `closed` (or any project with unpushed commits on `main`), navigate to that project folder and run `git push` on `main`
   - Delete the flag file after pushing: `rm data/push-remote.flag`
   - Log which projects were pushed (to stdout or a history entry)
+- **Flag expiry:** If the flag exists but there are no tasks in `staged` status and no unpushed commits on any project's `main`, delete the flag without pushing (staging is empty, nothing to push).
 - If the flag does not exist: skip this step (no push requested)
 - This flag can also be created manually from the command line: `touch data/push-remote.flag`
 
