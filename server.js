@@ -168,6 +168,17 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { deleted: id });
   }
 
+  // POST /api/push-remote — create flag file for human-triggered push
+  if (req.method === 'POST' && pathname === '/api/push-remote') {
+    try {
+      const flagFile = path.join(__dirname, 'data', 'push-remote.flag');
+      fs.writeFileSync(flagFile, new Date().toISOString());
+      return json(res, 200, { ok: true, message: 'Push requested' });
+    } catch (e) {
+      return json(res, 500, { error: e.message });
+    }
+  }
+
   // 404
   json(res, 404, { error: 'Not found' });
 });
