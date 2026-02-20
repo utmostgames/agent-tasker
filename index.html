@@ -85,7 +85,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
 .card.dragging { opacity: 0.4; }
 .drag-clone { position: fixed; pointer-events: none; opacity: 0.85; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-.card::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; }
+.drag-clone::before { width: 8px !important; }
+.card::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; transition: width 0.2s ease; }
+.card.dragging::before { width: 8px; }
 .card[data-priority="1"]::before { background: var(--p1); }
 .card[data-priority="2"]::before { background: var(--p2); }
 .card[data-priority="3"]::before { background: var(--p3); }
@@ -116,6 +118,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .card-desc { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 10px; color: var(--text-dim); }
 .card-assignee { font-size: 10px; color: var(--text-muted); }
+
+/* Mobile: compact layout & drag handle zone */
+@media (max-width: 768px) {
+  .board { padding: 6px 4px; gap: 4px; }
+  .column { min-width: 150px; max-width: none; flex: 1; }
+  .column-header { padding: 6px 8px; font-size: 12px; }
+  .column-body { padding: 4px; gap: 4px; }
+  .card { padding: 6px 6px 6px 10px; }
+  .card-title { font-size: 12px; }
+  .card-desc { font-size: 10px; }
+  .card-top { gap: 3px; margin-bottom: 2px; }
+  .badge { font-size: 9px; padding: 1px 4px; }
+  .card-footer { margin-top: 4px; font-size: 9px; }
+  .topbar { padding: 6px 8px; gap: 6px; flex-wrap: wrap; }
+  .topbar h1 { font-size: 14px; }
+  .topbar input[type="search"] { width: 140px; }
+  .filterbar { padding: 4px 8px; gap: 4px; }
+  .chip { font-size: 10px; padding: 1px 5px; }
+}
 
 /* Modal */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 60px; }
@@ -444,6 +465,7 @@ let touchOffsetX = 0;
 let touchOffsetY = 0;
 let touchHandledTap = false;
 let touchStartTime = 0;
+let touchInDragZone = false;
 
 // Suppress synthetic click after touch-tap to avoid double openModal
 document.getElementById('board').addEventListener('click', function(e) {
@@ -462,15 +484,21 @@ document.getElementById('board').addEventListener('touchstart', function(e) {
   const card = e.target.closest('.card');
   if (!card) return;
   const touch = e.touches[0];
+  const rect = card.getBoundingClientRect();
+  const touchRelX = touch.clientX - rect.left;
+  const leftThird = rect.width / 3;
+
+  // Only allow drag initiation from the left third of the card on touch devices
   touchDragId = parseInt(card.dataset.id);
   touchStartX = touch.clientX;
   touchStartY = touch.clientY;
   touchDragging = false;
   touchClone = null;
   touchStartTime = Date.now();
-  const rect = card.getBoundingClientRect();
   touchOffsetX = touch.clientX - rect.left;
   touchOffsetY = touch.clientY - rect.top;
+  // Mark whether the touch started in the drag zone (left third)
+  touchInDragZone = touchRelX <= leftThird;
 }, { passive: true });
 
 document.getElementById('board').addEventListener('touchmove', function(e) {
@@ -480,6 +508,8 @@ document.getElementById('board').addEventListener('touchmove', function(e) {
   const dy = touch.clientY - touchStartY;
 
   if (!touchDragging) {
+    // Only allow drag if touch started in the left third of the card
+    if (!touchInDragZone) return;
     // Require both 15px distance AND 200ms hold time to avoid accidental drags on mobile
     const elapsed = Date.now() - touchStartTime;
     if (Math.sqrt(dx * dx + dy * dy) < 15 || elapsed < 200) return;
@@ -560,6 +590,7 @@ document.getElementById('board').addEventListener('touchend', function(e) {
   touchOffsetX = 0;
   touchOffsetY = 0;
   touchStartTime = 0;
+  touchInDragZone = false;
 }, { passive: true });
 
 // Modal
