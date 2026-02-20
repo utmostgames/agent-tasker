@@ -93,6 +93,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Ar
 .card[data-priority="3"]::before { background: var(--p3); }
 .card[data-priority="4"]::before { background: var(--p4); }
 .card[data-priority="5"]::before { background: var(--p5); }
+.card::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius); pointer-events: none; }
+.card[data-type="simple"]::after      { background: linear-gradient(to right, rgba(139,148,158,0.3), rgba(139,148,158,0)); }
+.card[data-type="brainstorm"]::after   { background: linear-gradient(to right, rgba(188,140,255,0.3), rgba(188,140,255,0)); }
+.card[data-type="feature"]::after      { background: linear-gradient(to right, rgba(63,185,80,0.3), rgba(63,185,80,0)); }
+.card[data-type="maintenance"]::after  { background: linear-gradient(to right, rgba(210,153,34,0.3), rgba(210,153,34,0)); }
 .card-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
 .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
 .badge-type { color: #fff; }
@@ -393,7 +398,7 @@ function render() {
 
 function renderCard(t) {
   return `
-    <div class="card" draggable="true" data-id="${t.id}" data-priority="${t.priority}"
+    <div class="card" draggable="true" data-id="${t.id}" data-priority="${t.priority}" data-type="${t.type}"
          ondragstart="handleDragStart(event,${t.id})" ondragend="handleDragEnd(event)"
          onclick="openModal(${t.id})">
       <div class="card-top">
