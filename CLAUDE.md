@@ -11,9 +11,11 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
 - Update the task `details` field with the brainstorm output
 
 ### Step 1.5: Create Development Branch
-- Before any development begins, create a new git branch in the target project:
+- Before any development begins, create a new git branch **from `main`** in the target project:
   - Branch name: `task-{task_id}/{short-slug}` (e.g., `task-5/add-dark-mode`)
-  - Run `git checkout -b <branch-name>` in the project directory
+  - Always start from main: `git checkout main && git pull && git checkout -b <branch-name>`
+  - Never branch from another feature branch — always branch from `main`
+  - Alternative: use a git worktree for full isolation: `git worktree add ../worktrees/<branch-name> -b <branch-name> main`
 - All development and commits happen on this branch, never directly on `main`
 - The branch is merged to `main` during Step 4 (Stage and Close) after tests pass
 
