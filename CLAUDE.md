@@ -7,6 +7,7 @@ This is a shared task board at `data/tasks.json`. Humans interact via the web UI
 Once the human confirms "yes", run this loop autonomously until the backlog is empty or the human interrupts:
 
 ### Step 1: Brainstorm (if needed)
+- **Clear context first.** Before brainstorming, summarize completed work in a short status report, then release any large file contents or intermediate state from memory. This keeps the session lean for the next task.
 - If the task effort is NOT `XS`, use the `superpowers:brainstorming` skill to analyze the task before development
 - Update the task `details` field with the brainstorm output
 - **Create follow-up tasks:** If brainstorming breaks a large task into sub-phases or sub-tasks, create those as separate tasks in `backlog` with proper `depends_on` chains. This makes the work visible on the board and lets the human re-prioritize.
@@ -79,17 +80,11 @@ The orchestrator MAY run up to **3 dev workers concurrently** to speed up throug
 5. **Merge sequentially.** When multiple tasks reach `staged`, merge them to `main` one at a time to avoid merge conflicts. If a conflict occurs, resolve it before proceeding to the next merge.
 6. **Backfill slots.** When a parallel slot frees up (task moves past `developing`), check for the next eligible `backlog` task and dispatch a new dev worker to keep up to 3 slots utilized.
 
-## Idle Watch Loop
-When the backlog is empty, do not exit. Instead:
-1. Report "Board clear — watching for new tasks (checking every 1 minute)"
-2. **Clear context.** Summarize completed work in a short status report, then release any large file contents or intermediate state from memory. This keeps the session lean for long-running monitoring.
-3. **Reset the worker counter.** The next dev/test workers start numbering from the next task ID (e.g., `claude-dev-{task_id}`), not from previous session IDs. This keeps worker names aligned with task IDs.
-4. **Check push flag.** Run Step 4.5 (check if `data/push-remote.flag` exists and push if so).
-5. Wait 1 minute (use `sleep 60` via Bash)
-6. Read `data/tasks.json` again
-7. If a `backlog` task exists: re-enter the work loop from Step 1 (no need to ask permission again — it was granted at session start)
-8. If still empty: repeat from step 5
-9. Continue this watch loop for the lifetime of the session, until the human says `stop` or `pause`
+## Idle — No Tasks
+When the backlog is empty:
+1. Report "Board clear — no eligible tasks."
+2. **Check push flag.** Run Step 4.5 (check if `data/push-remote.flag` exists and push if so).
+3. **Exit.** Run `/exit` (twice to be sure) to shut down. The external shell script handles restarting when new tasks appear.
 
 ## Human Interrupt
 The human can interrupt the work loop at any time between task cycles:
