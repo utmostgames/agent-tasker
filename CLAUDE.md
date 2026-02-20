@@ -68,7 +68,7 @@ Once the human confirms "yes", run this loop autonomously until the backlog is e
 ### Step 5: Next Task
 - Read `data/tasks.json` for the next highest-priority `backlog` task
 - If found: continue the loop from Step 1
-- If no more backlog tasks: enter the **idle watch loop** (see below)
+- If no more backlog tasks: follow the **Idle — No Tasks** procedure below
 
 ### Parallel Dispatch
 The orchestrator MAY run up to **3 dev workers concurrently** to speed up throughput:
@@ -81,10 +81,10 @@ The orchestrator MAY run up to **3 dev workers concurrently** to speed up throug
 6. **Backfill slots.** When a parallel slot frees up (task moves past `developing`), check for the next eligible `backlog` task and dispatch a new dev worker to keep up to 3 slots utilized.
 
 ## Idle — No Tasks
-When the backlog is empty:
+When the backlog is empty or all remaining tasks are unactionable (blocked by dependencies, human-assigned, or `simple` type):
 1. Report "Board clear — no eligible tasks."
 2. **Check push flag.** Run Step 4.5 (check if `data/push-remote.flag` exists and push if so).
-3. **Exit.** Run `/exit` (twice to be sure) to shut down. The external shell script handles restarting when new tasks appear.
+3. **Exit Claude Code.** Write the exit flag file: `touch data/claude-exit.flag` via the Bash tool. The external shell script (`run-claude.sh`) monitors for this file and terminates the Claude process automatically. Do NOT wait for user input — write the flag immediately after step 2.
 
 ## Human Interrupt
 The human can interrupt the work loop at any time between task cycles:
